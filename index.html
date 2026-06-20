@@ -173,10 +173,12 @@
     <button class="tab-btn active" data-view="prompt">Prompt</button>
     <button class="tab-btn" data-view="minimax">MiniMax M3</button>
     <button class="tab-btn" data-view="qwen">Qwen 3.7 Plus</button>
+    <button class="tab-btn" data-view="kimi">Kimi k2.7 Code</button>
     <button class="tab-btn" data-view="split">Split View</button>
   </div>
   <div class="view-mode hidden" id="splitModes">
     <button class="view-btn active" data-mode="dual">2 cols</button>
+    <button class="view-btn" data-mode="triple">3 cols</button>
   </div>
 </header>
 
@@ -196,6 +198,11 @@
     <iframe src="qwen3.7plus/solar-system.html" title="Qwen 3.7 Plus"></iframe>
   </div>
 
+  <div class="pane hidden" id="view-kimi">
+    <div class="pane-label">Kimi k2.7 Code</div>
+    <iframe src="kimik-2.7code/solar-system.html" title="Kimi k2.7 Code"></iframe>
+  </div>
+
   <div class="pane hidden" id="split-minimax">
     <div class="pane-label">MiniMax M3</div>
     <iframe src="minimax-m3/index.html" title="MiniMax M3"></iframe>
@@ -204,6 +211,11 @@
   <div class="pane hidden" id="split-qwen">
     <div class="pane-label">Qwen 3.7 Plus</div>
     <iframe src="qwen3.7plus/solar-system.html" title="Qwen 3.7 Plus"></iframe>
+  </div>
+
+  <div class="pane hidden" id="split-kimi">
+    <div class="pane-label">Kimi k2.7 Code</div>
+    <iframe src="kimik-2.7code/solar-system.html" title="Kimi k2.7 Code"></iframe>
   </div>
 </div>
 
@@ -239,8 +251,24 @@ Code Quality & UI Styling:
 
   document.getElementById('promptContent').textContent = promptText;
 
-  const views = ['prompt', 'minimax', 'qwen', 'split'];
   const tabBtns = document.querySelectorAll('.tab-btn');
+  const viewBtns = document.querySelectorAll('.view-btn');
+  const splitModes = document.getElementById('splitModes');
+  let splitMode = 'dual';
+
+  function setSplitMode(mode) {
+    splitMode = mode;
+    viewBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    updateSplitVisibility();
+  }
+
+  function updateSplitVisibility() {
+    const inSplit = document.querySelector('.tab-btn.active')?.dataset.view === 'split';
+    const showKimi = inSplit && splitMode === 'triple';
+    document.getElementById('split-minimax').classList.toggle('hidden', !inSplit);
+    document.getElementById('split-qwen').classList.toggle('hidden', !inSplit);
+    document.getElementById('split-kimi').classList.toggle('hidden', !showKimi);
+  }
 
   function showView(name) {
     tabBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
@@ -248,11 +276,14 @@ Code Quality & UI Styling:
     document.getElementById('view-prompt').classList.toggle('active', name === 'prompt');
     document.getElementById('view-minimax').classList.toggle('hidden', name !== 'minimax');
     document.getElementById('view-qwen').classList.toggle('hidden', name !== 'qwen');
-    document.getElementById('split-minimax').classList.toggle('hidden', name !== 'split');
-    document.getElementById('split-qwen').classList.toggle('hidden', name !== 'split');
+    document.getElementById('view-kimi').classList.toggle('hidden', name !== 'kimi');
+
+    splitModes.classList.toggle('hidden', name !== 'split');
+    updateSplitVisibility();
   }
 
   tabBtns.forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
+  viewBtns.forEach(btn => btn.addEventListener('click', () => setSplitMode(btn.dataset.mode)));
 </script>
 
 </body>
