@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System Explorer</title>
+<style>
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   ============================================ */
+:root {
+  --speed-multiplier: 1;
+  --bg-deep: #020010;
+  --bg-mid: #0a0025;
+  --bg-accent: #120035;
+  --glass-bg: rgba(15, 10, 40, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --text-primary: #e8e6f0;
+  --text-secondary: #9895a8;
+  --text-accent: #a78bfa;
+  --sun-color: #fdb813;
+  --sun-glow: #ff8c00;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   SPACE BACKGROUND
+   ============================================ */
+.space-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(30, 0, 80, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(10, 20, 80, 0.3) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(50, 0, 60, 0.2) 0%, transparent 50%),
+    linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-mid) 50%, var(--bg-deep) 100%);
+  z-index: 0;
+}
+
+/* ============================================
+   STARS (CSS-based twinkling)
+   ============================================ */
+.stars-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--twinkle-duration, 3s) ease-in-out infinite alternate;
+  animation-delay: var(--twinkle-delay, 0s);
+  opacity: 0;
+}
+
+@keyframes twinkle {
+  0%, 20% { opacity: 0.1; transform: scale(0.8); }
+  50% { opacity: var(--max-opacity, 0.8); transform: scale(1); }
+  80%, 100% { opacity: 0.2; transform: scale(0.9); }
+}
+
+/* ============================================
+   SOLAR SYSTEM CONTAINER
+   ============================================ */
+.solar-system {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* ============================================
+   THE SUN
+   ============================================ */
+.sun {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff5c0, var(--sun-color) 40%, var(--sun-glow) 70%, #cc5500);
+  box-shadow:
+    0 0 20px 5px rgba(253, 184, 19, 0.6),
+    0 0 60px 15px rgba(255, 140, 0, 0.3),
+    0 0 120px 40px rgba(255, 100, 0, 0.15),
+    0 0 200px 60px rgba(255, 60, 0, 0.08);
+  z-index: 100;
+  animation: sun-pulse 4s ease-in-out infinite alternate;
+  cursor: pointer;
+}
+
+@keyframes sun-pulse {
+  0% {
+    box-shadow:
+      0 0 20px 5px rgba(253, 184, 19, 0.6),
+      0 0 60px 15px rgba(255, 140, 0, 0.3),
+      0 0 120px 40px rgba(255, 100, 0, 0.15),
+      0 0 200px 60px rgba(255, 60, 0, 0.08);
+  }
+  100% {
+    box-shadow:
+      0 0 25px 8px rgba(253, 184, 19, 0.7),
+      0 0 70px 20px rgba(255, 140, 0, 0.4),
+      0 0 140px 50px rgba(255, 100, 0, 0.2),
+      0 0 220px 70px rgba(255, 60, 0, 0.1);
+  }
+}
+
+/* ============================================
+   ORBITS
+   ============================================ */
+.orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  animation: orbit-rotate calc(var(--orbit-duration) / var(--speed-multiplier)) linear infinite;
+  animation-play-state: var(--play-state, running);
+}
+
+.orbit:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.1);
+}
+
+.orbit.highlighted {
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.15);
+}
+
+@keyframes orbit-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   PLANETS
+   ============================================ */
+.planet-wrapper {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.planet {
+  position: relative;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  /* Counter-rotate to keep planet upright */
+  animation: counter-rotate calc(var(--orbit-duration) / var(--speed-multiplier)) linear infinite;
+  animation-play-state: var(--play-state, running);
+}
+
+@keyframes counter-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.planet:hover {
+  transform: scale(1.3);
+}
+
+.planet:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(4px);
+}
+
+/* Tooltip */
+.planet::after {
+  content: attr(data-name);
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  padding: 3px 10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Individual planet styles */
+.planet-mercury {
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 35% 30%, #c2b280, #8c7e6d 60%, #5a5045);
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.5), 0 0 6px rgba(194, 178, 128, 0.3);
+}
+
+.planet-venus {
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle at 35% 30%, #ffd699, #e8a944 50%, #c47f17);
+  box-shadow: inset -3px -3px 6px rgba(0,0,0,0.4), 0 0 8px rgba(232, 169, 68, 0.3);
+}
+
+.planet-earth {
+  width: 17px;
+  height: 17px;
+  background: radial-gradient(circle at 35% 30%, #7ec8e3, #3a86c8 40%, #1a5e3a 60%, #2d6e42);
+  box-shadow: inset -3px -3px 6px rgba(0,0,0,0.4), 0 0 10px rgba(100, 180, 255, 0.3);
+}
+
+.planet-mars {
+  width: 13px;
+  height: 13px;
+  background: radial-gradient(circle at 35% 30%, #e8855e, #c1440e 50%, #8b2500);
+  box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5), 0 0 8px rgba(193, 68, 14, 0.3);
+}
+
+.planet-jupiter {
+  width: 34px;
+  height: 34px;
+  background:
+    radial-gradient(circle at 35% 30%, #f5deb3, #d4a55a 30%, #c88b3a 50%, #a0622a 70%, #8b4513);
+  box-shadow: inset -5px -5px 10px rgba(0,0,0,0.4), 0 0 15px rgba(200, 139, 58, 0.2);
+  overflow: hidden;
+}
+
+.planet-jupiter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(139, 69, 19, 0.3) 3px,
+      rgba(139, 69, 19, 0.3) 5px,
+      transparent 5px,
+      transparent 7px
+    );
+}
+
+.planet-saturn {
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(circle at 35% 30%, #f5e6c8, #d4a847 40%, #c49432 60%, #a07828);
+  box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4), 0 0 12px rgba(212, 168, 71, 0.2);
+}
+
+/* Saturn's rings */
+.planet-saturn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 14px;
+  transform: translate(-50%, -50%) rotateX(75deg) rotateZ(-15deg);
+  border-radius: 50%;
+  border: 3px solid rgba(210, 180, 120, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(210, 180, 120, 0.2),
+    inset 0 0 0 2px rgba(210, 180, 120, 0.15);
+  pointer-events: none;
+}
+
+.planet-uranus {
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle at 35% 30%, #b8f0f0, #72c4c4 40%, #4da8a8 60%, #2d8888);
+  box-shadow: inset -3px -3px 7px rgba(0,0,0,0.3), 0 0 10px rgba(114, 196, 196, 0.25);
+}
+
+.planet-neptune {
+  width: 21px;
+  height: 21px;
+  background: radial-gradient(circle at 35% 30%, #7b9ee8, #3355cc 40%, #1a3399 60%, #0d1f6e);
+  box-shadow: inset -3px -3px 7px rgba(0,0,0,0.4), 0 0 12px rgba(51, 85, 204, 0.3);
+}
+
+/* ============================================
+   INFO PANEL (SIDEBAR)
+   ============================================ */
+.info-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-left: 1px solid var(--glass-border);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.info-panel.active {
+  transform: translateX(0);
+}
+
+.info-panel-header {
+  position: relative;
+  padding: 32px 28px 24px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.info-panel-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.info-panel-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: var(--glass-highlight);
+}
+
+.info-panel-planet-name {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--text-primary), var(--text-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.info-panel-planet-type {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+
+.info-panel-body {
+  padding: 24px 28px;
+  flex: 1;
+}
+
+.info-panel-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+.info-panel-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-accent);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+/* Quick Facts Grid */
+.facts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.fact-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 14px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.fact-card:hover {
+  border-color: var(--glass-highlight);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fact-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.fact-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Fun Fact */
+.fun-fact {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(100, 180, 255, 0.05));
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.fun-fact-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-accent);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.fun-fact-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ============================================
+   CONTROL PANEL
+   ============================================ */
+.control-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 18px 22px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 200px;
+}
+
+.control-panel-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--glass-highlight);
+}
+
+.control-btn.active {
+  background: rgba(167, 139, 250, 0.15);
+  border-color: rgba(167, 139, 250, 0.3);
+  color: var(--text-accent);
+}
+
+.speed-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.speed-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.speed-value {
+  color: var(--text-accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-accent);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+/* ============================================
+   OVERLAY (for panel backdrop)
+   ============================================ */
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.panel-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ============================================
+   TITLE
+   ============================================ */
+.app-title {
+  position: fixed;
+  top: 24px;
+  left: 28px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.app-title h1 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .info-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .control-panel {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    min-width: unset;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Space Background -->
+<div class="space-bg"></div>
+
+<!-- Stars Layer -->
+<div class="stars-layer" id="starsLayer"></div>
+
+<!-- App Title -->
+<div class="app-title">
+  <h1>Solar System</h1>
+</div>
+
+<!-- Solar System -->
+<div class="solar-system" id="solarSystem">
+  <!-- Sun -->
+  <div class="sun" data-planet="sun"></div>
+  <!-- Orbits and planets will be generated by JS -->
+</div>
+
+<!-- Panel Overlay -->
+<div class="panel-overlay" id="panelOverlay"></div>
+
+<!-- Info Panel -->
+<div class="info-panel" id="infoPanel">
+  <div class="info-panel-header">
+    <button class="info-panel-close" id="panelClose" aria-label="Close">&times;</button>
+    <div class="info-panel-planet-name" id="planetName">Earth</div>
+    <div class="info-panel-planet-type" id="planetType">Terrestrial Planet</div>
+  </div>
+  <div class="info-panel-body">
+    <p class="info-panel-description" id="planetDescription">
+      Description here.
+    </p>
+    <div class="info-panel-section-title">Quick Facts</div>
+    <div class="facts-grid" id="factsGrid">
+      <!-- Filled by JS -->
+    </div>
+    <div class="fun-fact">
+      <div class="fun-fact-label">Fun Fact</div>
+      <p class="fun-fact-text" id="funFact">Fun fact here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Control Panel -->
+<div class="control-panel">
+  <div class="control-panel-title">Controls</div>
+  <div class="control-row">
+    <button class="control-btn" id="pauseBtn" title="Pause / Resume" aria-label="Pause or Resume">&#9646;&#9646;</button>
+    <div class="speed-control">
+      <div class="speed-label">
+        <span>Speed</span>
+        <span class="speed-value" id="speedValue">1.0x</span>
+      </div>
+      <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================
+   PLANET DATA
+   ============================================ */
+const planets = [
+  {
+    id: 'mercury',
+    name: 'Mercury',
+    type: 'Terrestrial Planet',
+    orbitRadius: 70,
+    duration: 8,
+    className: 'planet-mercury',
+    description: 'Mercury is the smallest planet in our solar system and the closest to the Sun. Its surface is covered in craters and resembles our Moon. Despite being closest to the Sun, it is not the hottest planet.',
+    facts: {
+      'Distance from Sun': '57.9M km',
+      'Relative Size': '0.38x Earth',
+      'Orbital Period': '88 days',
+      'Avg. Temperature': '167°C'
+    },
+    funFact: 'A day on Mercury (sunrise to sunrise) lasts 176 Earth days — twice as long as its year!'
+  },
+  {
+    id: 'venus',
+    name: 'Venus',
+    type: 'Terrestrial Planet',
+    orbitRadius: 105,
+    duration: 13,
+    className: 'planet-venus',
+    description: 'Venus is the second planet from the Sun and the hottest planet in our solar system. Its thick atmosphere traps heat in a runaway greenhouse effect, making it hotter than Mercury.',
+    facts: {
+      'Distance from Sun': '108.2M km',
+      'Relative Size': '0.95x Earth',
+      'Orbital Period': '225 days',
+      'Avg. Temperature': '464°C'
+    },
+    funFact: 'Venus rotates backwards compared to most planets — the Sun rises in the west and sets in the east.'
+  },
+  {
+    id: 'earth',
+    name: 'Earth',
+    type: 'Terrestrial Planet',
+    orbitRadius: 145,
+    duration: 20,
+    className: 'planet-earth',
+    description: 'Earth is the third planet from the Sun and the only known planet to harbor life. Its liquid water, protective atmosphere, and magnetic field create the perfect conditions for life to flourish.',
+    facts: {
+      'Distance from Sun': '149.6M km',
+      'Relative Size': '1x (Reference)',
+      'Orbital Period': '365.25 days',
+      'Avg. Temperature': '15°C'
+    },
+    funFact: 'Earth is the only planet not named after a Greek or Roman god — the name comes from Old English and Germanic words meaning "ground".'
+  },
+  {
+    id: 'mars',
+    name: 'Mars',
+    type: 'Terrestrial Planet',
+    orbitRadius: 190,
+    duration: 28,
+    className: 'planet-mars',
+    description: 'Mars is the fourth planet from the Sun, known as the Red Planet due to iron oxide (rust) on its surface. It has the tallest volcano and the deepest canyon in the solar system.',
+    facts: {
+      'Distance from Sun': '227.9M km',
+      'Relative Size': '0.53x Earth',
+      'Orbital Period': '687 days',
+      'Avg. Temperature': '-65°C'
+    },
+    funFact: 'Olympus Mons on Mars is the tallest volcano in the solar system — nearly 3 times the height of Mount Everest!'
+  },
+  {
+    id: 'jupiter',
+    name: 'Jupiter',
+    type: 'Gas Giant',
+    orbitRadius: 260,
+    duration: 45,
+    className: 'planet-jupiter',
+    description: 'Jupiter is the largest planet in our solar system — a massive gas giant with a Great Red Spot storm that has been raging for over 300 years. It has at least 95 known moons.',
+    facts: {
+      'Distance from Sun': '778.5M km',
+      'Relative Size': '11.2x Earth',
+      'Orbital Period': '11.9 years',
+      'Avg. Temperature': '-110°C'
+    },
+    funFact: 'Jupiter\'s Great Red Spot is a storm so large that Earth could fit inside it — and it\'s been shrinking over the years.'
+  },
+  {
+    id: 'saturn',
+    name: 'Saturn',
+    type: 'Gas Giant',
+    orbitRadius: 340,
+    duration: 65,
+    className: 'planet-saturn',
+    description: 'Saturn is the sixth planet from the Sun, famous for its stunning ring system made of ice and rock particles. It is the least dense planet — it would float in water if you had a bathtub big enough.',
+    facts: {
+      'Distance from Sun': '1.43B km',
+      'Relative Size': '9.4x Earth',
+      'Orbital Period': '29.4 years',
+      'Avg. Temperature': '-140°C'
+    },
+    funFact: 'Saturn\'s rings are only about 10 meters thick on average, despite spanning 282,000 km in diameter!'
+  },
+  {
+    id: 'uranus',
+    name: 'Uranus',
+    type: 'Ice Giant',
+    orbitRadius: 410,
+    duration: 85,
+    className: 'planet-uranus',
+    description: 'Uranus is the seventh planet from the Sun and an ice giant. It rotates on its side, with an axial tilt of 98 degrees, likely caused by a collision with an Earth-sized object long ago.',
+    facts: {
+      'Distance from Sun': '2.87B km',
+      'Relative Size': '4x Earth',
+      'Orbital Period': '84 years',
+      'Avg. Temperature': '-195°C'
+    },
+    funFact: 'Uranus rolls around the Sun like a ball, rotating perpendicular to its orbit — it essentially orbits on its side!'
+  },
+  {
+    id: 'neptune',
+    name: 'Neptune',
+    type: 'Ice Giant',
+    orbitRadius: 470,
+    duration: 110,
+    className: 'planet-neptune',
+    description: 'Neptune is the eighth and farthest planet from the Sun. It has the strongest winds in the solar system, reaching speeds of over 2,000 km/h. Its vivid blue color comes from methane in its atmosphere.',
+    facts: {
+      'Distance from Sun': '4.5B km',
+      'Relative Size': '3.9x Earth',
+      'Orbital Period': '165 years',
+      'Avg. Temperature': '-200°C'
+    },
+    funFact: 'Neptune was the first planet found by mathematical prediction rather than direct observation — discovered in 1846!'
+  }
+];
+
+/* Sun data for info panel */
+const sunData = {
+  name: 'The Sun',
+  type: 'G-Type Main-Sequence Star',
+  description: 'The Sun is the star at the center of our solar system. It is a nearly perfect ball of hot plasma, heated to incandescence by nuclear fusion reactions in its core, radiating energy as sunlight and solar wind.',
+  facts: {
+    'Diameter': '1.39M km',
+    'Surface Temp': '5,500°C',
+    'Core Temp': '15M°C',
+    'Age': '4.6 Billion yrs'
+  },
+  funFact: 'The Sun accounts for 99.86% of all mass in our solar system — over 1,000 Earths could fit inside it!'
+};
+
+/* ============================================
+   GENERATE STARS
+   ============================================ */
+function generateStars() {
+  const layer = document.getElementById('starsLayer');
+  const count = 200;
+
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.classList.add('star');
+    const size = Math.random() * 2.5 + 0.5;
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.setProperty('--twinkle-duration', (Math.random() * 4 + 2) + 's');
+    star.style.setProperty('--twinkle-delay', (Math.random() * 5) + 's');
+    star.style.setProperty('--max-opacity', (Math.random() * 0.5 + 0.4).toFixed(2));
+    layer.appendChild(star);
+  }
+}
+
+/* ============================================
+   BUILD SOLAR SYSTEM
+   ============================================ */
+function buildSolarSystem() {
+  const system = document.getElementById('solarSystem');
+
+  planets.forEach((planet) => {
+    /* Orbit ring */
+    const orbit = document.createElement('div');
+    orbit.classList.add('orbit');
+    orbit.dataset.orbitId = planet.id;
+    const diameter = planet.orbitRadius * 2;
+    orbit.style.width = diameter + 'px';
+    orbit.style.height = diameter + 'px';
+    orbit.style.setProperty('--orbit-duration', planet.duration + 's');
+
+    /* Planet element */
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('planet-wrapper');
+
+    const el = document.createElement('div');
+    el.classList.add('planet', planet.className);
+    el.dataset.name = planet.name;
+    el.dataset.planet = planet.id;
+    el.style.setProperty('--orbit-duration', planet.duration + 's');
+
+    wrapper.appendChild(el);
+    orbit.appendChild(wrapper);
+    system.appendChild(orbit);
+
+    /* Click handler */
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPanel(planet);
+      highlightOrbit(planet.id);
+    });
+  });
+
+  /* Sun click */
+  document.querySelector('.sun').addEventListener('click', () => {
+    openPanel(sunData);
+  });
+}
+
+/* ============================================
+   INFO PANEL LOGIC
+   ============================================ */
+let currentOrbitHighlight = null;
+
+function openPanel(data) {
+  const panel = document.getElementById('infoPanel');
+  const overlay = document.getElementById('panelOverlay');
+
+  document.getElementById('planetName').textContent = data.name;
+  document.getElementById('planetType').textContent = data.type;
+  document.getElementById('planetDescription').textContent = data.description;
+  document.getElementById('funFact').textContent = data.funFact;
+
+  /* Build facts grid */
+  const grid = document.getElementById('factsGrid');
+  grid.innerHTML = '';
+  Object.entries(data.facts).forEach(([label, value]) => {
+    const card = document.createElement('div');
+    card.classList.add('fact-card');
+    card.innerHTML = `
+      <div class="fact-label">${label}</div>
+      <div class="fact-value">${value}</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  panel.classList.add('active');
+  overlay.classList.add('active');
+}
+
+function closePanel() {
+  document.getElementById('infoPanel').classList.remove('active');
+  document.getElementById('panelOverlay').classList.remove('active');
+  clearOrbitHighlight();
+}
+
+function highlightOrbit(id) {
+  clearOrbitHighlight();
+  const orbit = document.querySelector(`.orbit[data-orbit-id="${id}"]`);
+  if (orbit) {
+    orbit.classList.add('highlighted');
+    currentOrbitHighlight = orbit;
+  }
+}
+
+function clearOrbitHighlight() {
+  if (currentOrbitHighlight) {
+    currentOrbitHighlight.classList.remove('highlighted');
+    currentOrbitHighlight = null;
+  }
+}
+
+/* ============================================
+   CONTROLS
+   ============================================ */
+function initControls() {
+  const pauseBtn = document.getElementById('pauseBtn');
+  const speedSlider = document.getElementById('speedSlider');
+  const speedValue = document.getElementById('speedValue');
+  let paused = false;
+
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    document.documentElement.style.setProperty('--play-state', paused ? 'paused' : 'running');
+    pauseBtn.classList.toggle('active', paused);
+    pauseBtn.innerHTML = paused ? '&#9654;' : '&#9646;&#9646;';
+  });
+
+  speedSlider.addEventListener('input', () => {
+    const val = parseFloat(speedSlider.value);
+    document.documentElement.style.setProperty('--speed-multiplier', val);
+    speedValue.textContent = val.toFixed(1) + 'x';
+  });
+}
+
+/* ============================================
+   EVENT LISTENERS
+   ============================================ */
+document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('panelOverlay').addEventListener('click', closePanel);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closePanel();
+});
+
+/* ============================================
+   INIT
+   ============================================ */
+generateStars();
+buildSolarSystem();
+initControls();
+</script>
+</body>
+</html>

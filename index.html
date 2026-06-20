@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Solar System — Comparison</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a12;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #e8e6f0;
+      --text-dim: #9895a8;
+      --accent: #a78bfa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: rgba(167,139,250,0.12);
+      border-color: rgba(167,139,250,0.3);
+      color: var(--accent);
+    }
+
+    .view-mode {
+      display: flex;
+      gap: 4px;
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .view-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .view-btn.active { background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.3); color: var(--accent); }
+
+    .content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pane {
+      flex: 1;
+      position: relative;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .pane:last-child { border-right: none; }
+
+    .pane-label {
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      background: rgba(167,139,250,0.06);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .pane iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .prompt-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      display: none;
+    }
+
+    .prompt-view.active { display: block; }
+
+    .prompt-view pre {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .prompt-view h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--text);
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SOLAR <span>SYSTEM</span> — AI Comparison</h1>
+  <div class="tabs">
+    <button class="tab-btn active" data-view="prompt">Prompt</button>
+    <button class="tab-btn" data-view="minimax">MiniMax M3</button>
+    <button class="tab-btn" data-view="qwen">Qwen 3.7 Plus</button>
+    <button class="tab-btn" data-view="split">Split View</button>
+  </div>
+  <div class="view-mode hidden" id="splitModes">
+    <button class="view-btn active" data-mode="dual">2 cols</button>
+  </div>
+</header>
+
+<div class="content">
+  <div class="prompt-view active" id="view-prompt">
+    <h2>Original Prompt</h2>
+    <pre id="promptContent"></pre>
+  </div>
+
+  <div class="pane hidden" id="view-minimax">
+    <div class="pane-label">MiniMax M3</div>
+    <iframe src="minimax-m3/index.html" title="MiniMax M3"></iframe>
+  </div>
+
+  <div class="pane hidden" id="view-qwen">
+    <div class="pane-label">Qwen 3.7 Plus</div>
+    <iframe src="qwen3.7plus/solar-system.html" title="Qwen 3.7 Plus"></iframe>
+  </div>
+
+  <div class="pane hidden" id="split-minimax">
+    <div class="pane-label">MiniMax M3</div>
+    <iframe src="minimax-m3/index.html" title="MiniMax M3"></iframe>
+  </div>
+
+  <div class="pane hidden" id="split-qwen">
+    <div class="pane-label">Qwen 3.7 Plus</div>
+    <iframe src="qwen3.7plus/solar-system.html" title="Qwen 3.7 Plus"></iframe>
+  </div>
+</div>
+
+<script>
+  const promptText = `Act as an expert Frontend Developer and UI/UX Designer. Create an interactive, visually stunning 2D Solar System web application using native, vanilla HTML, CSS, and JavaScript (Vanilla JS).
+
+CRITICAL CONSTRAINT: You must use ABSOLUTELY ZERO external dependencies, frameworks, or libraries. No React, no Tailwind, no Framer Motion, and no external CDN scripts/fonts. Everything must be achieved using semantic HTML, native CSS (including Flexbox/Grid, CSS Variables, and CSS Keyframes for animations), and standard Vanilla JS for DOM manipulation. Ideally, structure the code so it can fit into a single, self-contained HTML file (with <style> and <script> tags) or a clean 3-file structure.
+
+Aesthetics & Design Requirements:
+- Background: A deep, dark space background using a subtle CSS gradient (from deep black to a cosmic dark blue/purple) with an animated, twinkling stars effect generated via CSS or a lightweight HTML5 Canvas.
+- The Sun: Positioned fixed in the exact center, featuring a radiant, animated CSS box-shadow/glow effect to simulate intense light emission.
+- The Planets: Clean, stylized 2D HTML elements. Use their characteristic colors (e.g., reddish Mars, light blue Neptune, Saturn with its tilted rings built using CSS pseudo-elements). Add a subtle inner shadow or gradient to each planet to give them a slight 2D depth.
+- Orbits: Very thin, semi-transparent, concentric circular CSS borders mapping out each planet's path. Space them out visually so they fit beautifully on a standard desktop screen without real-world scaling constraints.
+
+Animation & Motion Requirements:
+- Active Orbits: Planets must orbit around the Sun infinitely and smoothly using CSS @keyframes and transform: rotate(). Adjust rotation durations so they are visually proportional (Mercury fast, Neptune much slower), but keep it dynamic enough so the simulation feels alive.
+- Hover Interaction: Hovering over a planet should scale it up slightly (transform: scale(1.1)), make its orbit line glow brighter, and reveal a sleek, CSS-styled tooltip with its name.
+
+Interactivity & Information Requirements (On Click):
+- Clicking a planet should open an elegant sidebar or a floating modal using a smooth CSS transition (like a slide-in or fade-in) without breaking or pausing the ongoing CSS orbital animations in the background.
+- The info panel must include:
+  * The planet's name with a modern, bold typographic design.
+  * A "Quick Facts" section in a clean CSS Grid layout (Distance from Sun, Relative Size, Orbital Period/Year Length, Average Temperature).
+  * A brief, engaging description or a "Fun Fact".
+  * A clear close button that hides the panel smoothly using JavaScript to toggle a CSS class.
+
+Control UI:
+- Add a small, sleek floating control panel in one of the corners with global controls: a Pause/Resume toggle button (which toggles a CSS class to pause animations via animation-play-state: paused) and a speed slider (using an HTML <input type="range">) to dynamically accelerate or decelerate the planetary movement using JavaScript to update a CSS custom property/variable.
+
+Code Quality & UI Styling:
+- Use a "Clean Sci-Fi" aesthetic: modern system sans-serif typography, rounded corners, and a glassmorphism effect (backdrop-filter: blur()) for the information panels and UI elements.
+- Provide the complete, clean, and production-ready code with helpful comments.`;
+
+  document.getElementById('promptContent').textContent = promptText;
+
+  const views = ['prompt', 'minimax', 'qwen', 'split'];
+  const tabBtns = document.querySelectorAll('.tab-btn');
+
+  function showView(name) {
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+
+    document.getElementById('view-prompt').classList.toggle('active', name === 'prompt');
+    document.getElementById('view-minimax').classList.toggle('hidden', name !== 'minimax');
+    document.getElementById('view-qwen').classList.toggle('hidden', name !== 'qwen');
+    document.getElementById('split-minimax').classList.toggle('hidden', name !== 'split');
+    document.getElementById('split-qwen').classList.toggle('hidden', name !== 'split');
+  }
+
+  tabBtns.forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.view)));
+</script>
+
+</body>
+</html>

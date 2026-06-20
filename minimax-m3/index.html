@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="An interactive, animated 2D solar system built with vanilla HTML, CSS, and JavaScript." />
+  <title>Solar System — Interactive 2D Simulation</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Animated twinkling starfield rendered via Canvas (lightweight & performant) -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- Main stage that contains the sun, orbits, and planets -->
+  <main class="solar-system" id="solarSystem" aria-label="Solar system simulation">
+    <!-- The Sun, fixed at the exact visual center -->
+    <div class="sun" aria-label="The Sun">
+      <div class="sun-core"></div>
+      <div class="sun-corona"></div>
+    </div>
+
+    <!-- Each .orbit owns:
+         1) The visible orbit ring (its own border)
+         2) A .orbit-track child that spins (carries the planet)
+         3) A .planet-wrap that counter-rotates so tooltip stays upright
+         4) The .planet element itself
+         CSS custom properties on the .orbit element drive size & duration. -->
+
+    <!-- MERCURY -->
+    <div class="orbit" style="--orbit-size: 16vmin; --duration: 8s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet mercury" type="button" data-planet="mercury" aria-label="Mercury">
+            <span class="tooltip">Mercury</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENUS -->
+    <div class="orbit" style="--orbit-size: 23vmin; --duration: 14s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet venus" type="button" data-planet="venus" aria-label="Venus">
+            <span class="tooltip">Venus</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EARTH (with tiny orbiting moon) -->
+    <div class="orbit" style="--orbit-size: 31vmin; --duration: 20s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet earth" type="button" data-planet="earth" aria-label="Earth">
+            <span class="tooltip">Earth</span>
+            <span class="moon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARS -->
+    <div class="orbit" style="--orbit-size: 39vmin; --duration: 28s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet mars" type="button" data-planet="mars" aria-label="Mars">
+            <span class="tooltip">Mars</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JUPITER -->
+    <div class="orbit" style="--orbit-size: 50vmin; --duration: 45s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet jupiter" type="button" data-planet="jupiter" aria-label="Jupiter">
+            <span class="tooltip">Jupiter</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SATURN (with CSS tilted rings) -->
+    <div class="orbit" style="--orbit-size: 62vmin; --duration: 65s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet saturn" type="button" data-planet="saturn" aria-label="Saturn">
+            <span class="tooltip">Saturn</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- URANUS -->
+    <div class="orbit" style="--orbit-size: 73vmin; --duration: 85s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet uranus" type="button" data-planet="uranus" aria-label="Uranus">
+            <span class="tooltip">Uranus</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEPTUNE -->
+    <div class="orbit" style="--orbit-size: 84vmin; --duration: 110s;">
+      <div class="orbit-track">
+        <div class="planet-wrap">
+          <button class="planet neptune" type="button" data-planet="neptune" aria-label="Neptune">
+            <span class="tooltip">Neptune</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating glassmorphism control panel (top-left, sleek sci-fi vibe) -->
+  <aside class="control-panel" aria-label="Simulation controls">
+    <div class="control-panel__header">
+      <span class="control-panel__title">Mission Control</span>
+      <span class="control-panel__status" id="statusIndicator">
+        <span class="status-dot"></span>
+        <span class="status-text">Running</span>
+      </span>
+    </div>
+
+    <div class="control-panel__body">
+      <!-- Pause/Resume toggle -->
+      <button class="btn-toggle" id="pauseBtn" type="button" aria-pressed="false">
+        <svg class="icon icon-pause" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <rect x="2" y="1.5" width="3" height="11" rx="1" />
+          <rect x="9" y="1.5" width="3" height="11" rx="1" />
+        </svg>
+        <svg class="icon icon-play" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M3 1.5 L12 7 L3 12.5 Z" />
+        </svg>
+        <span class="btn-toggle__label">Pause</span>
+      </button>
+
+      <!-- Speed slider -->
+      <div class="slider-group">
+        <div class="slider-group__header">
+          <label for="speedSlider">Orbital Speed</label>
+          <span class="slider-value" id="speedValue">1.0×</span>
+        </div>
+        <input
+          type="range"
+          id="speedSlider"
+          min="0"
+          max="5"
+          step="0.1"
+          value="1"
+          aria-label="Orbital speed multiplier"
+        />
+        <div class="slider-ticks" aria-hidden="true">
+          <span>0×</span><span>1×</span><span>5×</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sleek attribution/title block (top-right) -->
+  <header class="hero" aria-label="App title">
+    <h1 class="hero__title">SOLAR <span>SYSTEM</span></h1>
+    <p class="hero__subtitle">Interactive 2D Simulation · Click any planet</p>
+  </header>
+
+  <!-- Slide-in information panel (right side). Hidden by default. -->
+  <section class="info-panel" id="infoPanel" aria-hidden="true" aria-label="Planet information">
+    <button class="info-panel__close" id="closeInfoBtn" type="button" aria-label="Close info panel">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M3 3 L13 13 M13 3 L3 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <div class="info-panel__header">
+      <span class="info-panel__eyebrow" id="planetEyebrow">Planet · 03 of 08</span>
+      <div class="info-panel__planet-visual" id="planetVisual" aria-hidden="true"></div>
+      <h2 class="info-panel__name" id="planetName">Earth</h2>
+      <p class="info-panel__tag" id="planetTag">The Blue Marble</p>
+    </div>
+
+    <div class="info-panel__facts" id="planetFacts">
+      <!-- Populated by JS: 4 cards in a CSS grid (Distance, Size, Year, Temp) -->
+    </div>
+
+    <div class="info-panel__desc">
+      <h3>Overview</h3>
+      <p id="planetDesc">—</p>
+    </div>
+
+    <div class="info-panel__fun">
+      <h3>Fun Fact</h3>
+      <p id="planetFun">—</p>
+    </div>
+  </section>
+
+  <!-- Backdrop dimmer for the info panel (also closes the panel on click) -->
+  <div class="info-backdrop" id="infoBackdrop" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

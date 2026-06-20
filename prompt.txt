@@ -1,0 +1,28 @@
+Act as an expert Frontend Developer and UI/UX Designer. Create an interactive, visually stunning 2D Solar System web application using native, vanilla HTML, CSS, and JavaScript (Vanilla JS).
+
+CRITICAL CONSTRAINT: You must use ABSOLUTELY ZERO external dependencies, frameworks, or libraries. No React, no Tailwind, no Framer Motion, and no external CDN scripts/fonts. Everything must be achieved using semantic HTML, native CSS (including Flexbox/Grid, CSS Variables, and CSS Keyframes for animations), and standard Vanilla JS for DOM manipulation. Ideally, structure the code so it can fit into a single, self-contained HTML file (with <style> and <script> tags) or a clean 3-file structure.
+
+Aesthetics & Design Requirements:
+- Background: A deep, dark space background using a suttle CSS gradient (from deep black to a cosmic dark blue/purple) with an animated, twinkling stars effect generated via CSS or a lightweight HTML5 Canvas.
+- The Sun: Positioned fixed in the exact center, featuring a radiant, animated CSS box-shadow/glow effect to simulate intense light emission.
+- The Planets: Clean, stylized 2D HTML elements. Use their characteristic colors (e.g., reddish Mars, light blue Neptune, Saturn with its tilted rings built using CSS pseudo-elements). Add a subtle inner shadow or gradient to each planet to give them a slight 2D depth.
+- Orbits: Very thin, semi-transparent, concentric circular CSS borders mapping out each planet's path. Space them out visually so they fit beautifully on a standard desktop screen without real-world scaling constraints.
+
+Animation & Motion Requirements:
+- Active Orbits: Planets must orbit around the Sun infinitely and smoothly using CSS `@keyframes` and `transform: rotate()`. Adjust rotation durations so they are visually proportional (Mercury fast, Neptune much slower), but keep it dynamic enough so the simulation feels alive.
+- Hover Interaction: Hovering over a planet should scale it up slightly (`transform: scale(1.1)`), make its orbit line glow brighter, and reveal a sleek, CSS-styled tooltip with its name.
+
+Interactivity & Information Requirements (On Click):
+- Clicking a planet should open an elegant sidebar or a floating modal using a smooth CSS transition (like a slide-in or fade-in) without breaking or pausing the ongoing CSS orbital animations in the background.
+- The info panel must include:
+  * The planet's name with a modern, bold typographic design.
+  * A "Quick Facts" section in a clean CSS Grid layout (Distance from Sun, Relative Size, Orbital Period/Year Length, Average Temperature).
+  * A brief, engaging description or a "Fun Fact".
+  * A clear close button that hides the panel smoothly using JavaScript to toggle a CSS class.
+
+Control UI:
+- Add a small, sleek floating control panel in one of the corners with global controls: a Pause/Resume toggle button (which toggles a CSS class to pause animations via `animation-play-state: paused`) and a speed slider (using an HTML `<input type="range">`) to dynamically accelerate or decelerate the planetary movement using JavaScript to update a CSS custom property/variable.
+
+Code Quality & UI Styling:
+- Use a "Clean Sci-Fi" aesthetic: modern system sans-serif typography, rounded corners, and a glassmorphism effect (`backdrop-filter: blur()`) for the information panels and UI elements.
+- Provide the complete, clean, and production-ready code with helpful comments. 
