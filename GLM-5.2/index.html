@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar System | Interactive 2D Simulation</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!--
+    ============================================================
+    INTERACTIVE 2D SOLAR SYSTEM
+    Vanilla HTML / CSS / JS — zero external dependencies.
+    ============================================================
+  -->
+
+  <!-- Twinkling starfield rendered on <canvas> for performance -->
+  <canvas id="starfield" aria-hidden="true"></canvas>
+
+  <!-- Main stage: holds the Sun + every orbit/planet -->
+  <main id="solar-system" class="solar-system">
+
+    <!-- The Sun: fixed dead-center with a radiant CSS glow -->
+    <div class="sun" aria-label="The Sun">
+      <span class="sun__core"></span>
+    </div>
+
+    <!--
+      Planets are injected here by script.js from the PLANETS data array.
+      Each generated node looks like:
+      <div class="orbit" style="--base: 16s; --orbit-size: 340px;">
+        <div class="planet planet--earth" data-planet="earth">
+          <span class="planet__body"></span>
+          <span class="planet__tooltip">Earth</span>
+        </div>
+      </div>
+    -->
+    <div id="orbits" class="orbits"></div>
+  </main>
+
+  <!-- Floating control panel (glassmorphism) -->
+  <aside class="controls" aria-label="Simulation controls">
+    <h2 class="controls__title">Mission Control</h2>
+
+    <!-- Pause / Resume toggle -->
+    <button id="pauseBtn" class="controls__btn" type="button" aria-pressed="false">
+      <span class="controls__icon" aria-hidden="true">⏸</span>
+      <span class="controls__label">Pause</span>
+    </button>
+
+    <!-- Speed slider: updates the --speed CSS custom property -->
+    <label class="controls__slider" for="speedRange">
+      <span class="controls__slider-head">
+        <span>Speed</span>
+        <span id="speedValue" class="controls__slider-val">1.0×</span>
+      </span>
+      <input id="speedRange" type="range" min="0.1" max="5" step="0.1" value="1" />
+    </label>
+  </aside>
+
+  <!-- Slide-in info panel (hidden by default, toggled via .is-open) -->
+  <aside id="infoPanel" class="info-panel" aria-hidden="true">
+    <button id="closePanel" class="info-panel__close" type="button" aria-label="Close panel">✕</button>
+
+    <!-- Planet visual swatch -->
+    <div id="infoSwatch" class="info-panel__swatch"></div>
+
+    <!-- Planet name -->
+    <h2 id="infoName" class="info-panel__name"></h2>
+
+    <!-- Quick Facts grid -->
+    <section class="info-panel__facts">
+      <h3 class="info-panel__heading">Quick Facts</h3>
+      <div id="infoGrid" class="info-panel__grid"></div>
+    </section>
+
+    <!-- Description / Fun fact -->
+    <section class="info-panel__desc">
+      <h3 class="info-panel__heading">Did You Know?</h3>
+      <p id="infoFact"></p>
+    </section>
+  </aside>
+
+  <!-- Subtle scrim behind the panel; click to close -->
+  <div id="scrim" class="scrim" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
